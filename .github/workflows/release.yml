@@ -19,14 +19,24 @@ jobs:
       run: tar -xzvf nagios-plugins-*.tar.gz
     - name: Do sensu stuff
       run: | 
+        # cd into latest release directory
         cd nagios-plugins-*/
         pwd
+        # configure makefile
         ./configure
+        # build nagios plugins
         make
+        # rename build directory to a sensu-approved name
         mv plugins bin
+        # delete all non-executable files
         find bin -type f ! -executable -delete
+        # tar the binaries
         tar -czpvf sensu-nagios-plugins.tar.gz bin/
+        # create sha512 sum
         sha512sum sensu-nagios-plugins.tar.gz > sha512sum.txt
+
+        # move artifacts back to base directory for the release action to see them
+        mv sensu-nagios-plugins.tar.gz sha512sum.txt ..
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "sensu-nagios-plugins.tar.gz,sha512sum.txt"
