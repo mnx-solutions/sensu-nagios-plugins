@@ -23,7 +23,7 @@ jobs:
         cd nagios-plugins-*/
         pwd
         # configure makefile
-        ./configure
+        ./configure --disabled-shared
         # build nagios plugins
         make
         # rename build directory to a sensu-approved name
