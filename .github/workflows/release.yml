@@ -1,0 +1,36 @@
+name: Sensu Release
+
+on: 
+  push:
+    tags:
+    - '*'
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download latest nagios plugins release
+      run: curl -sL https://api.github.com/repos/nagios-plugins/nagios-plugins/releases/latest | grep "browser_download_url" | cut -d: -f2,3 | tr -d \" | wget -qi -
+    - name: Untar release
+      run: tar -xzvf nagios-plugins-*.tar.gz
+    - name: cd into release
+      run: cd nagios-plugins-*/
+    - name: Configure makefile
+      run: ./configure
+    - name: Build nagios plugins
+      run: make
+    - name: Rename plugins directory
+      run: mv plugins bin
+    - name: Find and delete non-executable files
+      run: find bin -type f ! -executable -delete
+    - name: Create tar archive of bin directory
+      run: tar -czpvf sensu-nagios-plugins.tar.gz bin/
+    - name: Generate SHA512 sum of archive
+      run: sha512sum sensu-nagios-plugins.tar.gz > sha512sum.txt
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "sensu-nagios-plugins.tar.gz,sha512sum.txt"
